@@ -45,7 +45,7 @@ def error(update, context):
 
 def get_stats(update, context):
     reply_lines = [
-        '<b><u>CroMoon Statistics foo</u></b> <i>(updated every 5 minutes)</i>\n',
+        '<b><u>CroMoon Statistics</u></b> <i>(updated every 5 minutes)</i>\n',
         'Current price:                 ${}'.format(f'{cromoon.get_current_price():.12f}'),
         'Current MC:                    ${}'.format(f'{cromoon.get_market_cap():,.2f}'),
         'Burn wallet (0x0dead):   {} ({})'.format(f'{cromoon.get_percent_burned():.2%}', cromoon.get_dead_wallet_string()),
