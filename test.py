@@ -14,8 +14,6 @@ bot.
 import logging
 import os
 
-import telegram
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 from CroMoonStats import CroMoonStats
 
 # Enable logging
@@ -44,7 +42,7 @@ def error(update, context):
     logger.warning('Update "%s" caused error "%s"', update, context.error)
 
 
-def get_stats(update, context):
+def get_stats():
     reply_lines = [
         '<b><u>CroMoon Statistics</u></b> <i>(updated every 5 minutes)</i>\n',
         'Current price:          ${}'.format(cromoon.price),
@@ -53,7 +51,7 @@ def get_stats(update, context):
         'Burn wallet (0x0dead):  {} ({})'.format(cromoon.burn_percent,
                                                  cromoon.burn_tokens),
     ]
-    update.message.reply_text('\n'.join(reply_lines), parse_mode=telegram.ParseMode.HTML)
+    return reply_lines
 
 
 def main():
@@ -61,29 +59,13 @@ def main():
     # Create the Updater and pass it your bot's token.
     # Make sure to set use_context=True to use the new context based callbacks
     # Post version 12 this will no longer be necessary
-    updater = Updater(api_key, use_context=True)
     global cromoon
-
-    # Get the dispatcher to register handlers
-    dp = updater.dispatcher
-
-    # on different commands - answer in Telegram
-    # dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(CommandHandler("help", help))
-    dp.add_handler(CommandHandler("stats", get_stats))
-
-    # log all errors
-    dp.add_error_handler(error)
 
     cromoon = CroMoonStats()
 
-    # Start the Bot
-    updater.start_polling()
-
-    # Run the bot until you press Ctrl-C or the process receives SIGINT,
-    # SIGTERM or SIGABRT. This should be used most of the time, since
-    # start_polling() is non-blocking and will stop the bot gracefully.
-    updater.idle()
+    res = get_stats()
+    holder_count = cromoon.get_token_holder_count()
+    print('\n'.join(res))
 
 
 if __name__ == '__main__':
