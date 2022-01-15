@@ -40,6 +40,16 @@ Afterburner events will happen once a week on an entirely random basis and will 
 The Afterburner program will simultaneously induce community hype whilst creating a significant positive price action and providing a burn outlet for the contract-generated LP tokens.
 
 <b><u>Blackhole</u></b> - Shortly after launch the team burned a substantial amount of the supply. By doing so we created a ‘blackhole’ which will, thanks to the reflection mechanism, suck CroMoon tokens out of the supply and burn them. This turns CroMoon into a deflationary token, because every transaction some CroMoon gets send to the burn wallet.
+
+<a href="https://medium.com/@CroMoon?p=1a9a3208e548">Medium Article</a>
+'''
+
+TOKENOMICS_SHORT = '''
+<b><u>Transaction Tax</u></b>: 10%
+<b><u>Reflections</u></b>: Half of the tax is automatically distributed to all token holders
+<b><u>Afterburner</u></b>: Randomly, once a week, half of LP tokens generated are burned (see Medium for details)
+<b><u>Blackhole</u></b>: Since a dead wallet is also a token holder, it gains reflections along with other holders.
+<a href="https://medium.com/@CroMoon?p=1a9a3208e548">Addition details in Medium</a>
 '''
 
 
@@ -73,6 +83,10 @@ def get_stats(update, context):
     update.message.reply_text('\n'.join(reply_lines), parse_mode=telegram.ParseMode.HTML)
 
 
+def tokenomics_detail(update, context):
+    update.message.reply_text(TOKENOMICS_TEXT, parse_mode=telegram.ParseMode.HTML)
+
+
 def tokenomics(update, context):
     update.message.reply_text(TOKENOMICS_TEXT, parse_mode=telegram.ParseMode.HTML)
 
@@ -92,6 +106,7 @@ def main():
     # dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CommandHandler("help", help))
     dp.add_handler(CommandHandler("stats", get_stats))
+    dp.add_handler(CommandHandler("tokenomics_detail", tokenomics_detail))
     dp.add_handler(CommandHandler("tokenomics", tokenomics))
 
     # log all errors
