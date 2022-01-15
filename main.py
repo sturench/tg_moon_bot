@@ -26,12 +26,27 @@ logger = logging.getLogger(__name__)
 api_key = os.environ.get('API_KEY', 'NONE')
 cromoon = CroMoonStats()
 
+TOKENOMICS_TEXT = '''
+Token transfers incur a 10% fee.
+<bold>Reflection</bold> — Holders earn passive rewards through static reflection as their balance of CroMoon grows. No action is required by the token holders to gain these reflections.
+
+<bold>Liquidity Pool Acquisition</bold> — A percentage of all transfer transactions is added to the liquidity pool. To keep the liquidity pool balanced 2.5% is added to the CRO token and 2.5% is added to the CroMoon token. The recipient of the LP units is the CroMoon team. To keep the funds safe we will add half of the 5% Liquidity Acquisition to the Liquidity Locker every week. The other half will be used for our Afterburner Effect (explained below)
+
+<bold>Afterburner</bold> - Once a week, half of the LP tokens produced by the contract will be withdrawn into equivalent portions of CroMoon and CRO. The CroMoon portion will be burned, and the CRO will immediately be used to purchase CroMoon from the market. The purchased CroMoon will then also be burned.
+
+AFTERBURNER events will happen once a week on an entirely random basis and will be announced only after the above process is fully complete in order to prevent any manipulation or timed buying/selling.
+
+The Afterburner program will simultaneously induce community hype whilst creating a significant positive price action and providing a burn outlet for the contract-generated LP tokens.
+
+<bold>Blackhole</bold> - Shortly after launch the team burned a substantial amount of the supply. By doing so we created a ‘blackhole’ which will, thanks to the reflection mechanism, suck CroMoon tokens out of the supply and burn them. This turns CroMoon into a deflationary token, because every transaction some CroMoon gets send to the burn wallet.
+'''
+
 
 # Define a few command handlers. These usually take the two arguments update and
 # context. Error handlers also receive the raised TelegramError object in error.
 def help(update, context):
     """Send a message when the command /help is issued."""
-    update.message.reply_text('At this point, you can just type /stats')
+    update.message.reply_text('At this point, you can just type /stats or /tokenomics')
 
 
 def echo(update, context):
@@ -57,6 +72,10 @@ def get_stats(update, context):
     update.message.reply_text('\n'.join(reply_lines), parse_mode=telegram.ParseMode.HTML)
 
 
+def tokenomics(update, context):
+    update.message.reply_text(TOKENOMICS_TEXT, parse_mode=telegram.ParseMode.HTML)
+
+
 def main():
     """Start the bot."""
     # Create the Updater and pass it your bot's token.
@@ -72,6 +91,7 @@ def main():
     # dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CommandHandler("help", help))
     dp.add_handler(CommandHandler("stats", get_stats))
+    dp.add_handler(CommandHandler("tokenomics", tokenomics))
 
     # log all errors
     dp.add_error_handler(error)
