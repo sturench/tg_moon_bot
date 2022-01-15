@@ -7,9 +7,9 @@ import requests
 class CroMoonStats:
     def __init__(self):
         self.total_supply = 1000000000000000
-        # self.last_dextools_update_time = datetime.fromtimestamp(0)
-        # self.dextools_result = None
-        # self.dextools_interval = timedelta(seconds=15)
+        self.last_dextools_update_time = datetime.fromtimestamp(0)
+        self.dextools_result = None
+        self.dextools_interval = timedelta(seconds=15)
         self.last_cronoscan_update_time = datetime.fromtimestamp(0)
         self.cronoscan_interval = timedelta(minutes=5)
         self.cronoscan_result = None
@@ -55,12 +55,15 @@ class CroMoonStats:
                     randint(10000, 999999999))).json()
             self.last_cronoscan_update_timescan_update_time = now
 
-    # def get_dextools(self):
-    #     now = datetime.now()
-    #     if now > self.last_dextools_update_time + self.dextools_interval:
-    #         self.dextools_result = requests.get(
-    #             'https://www.dextools.io/chain-cronos/api/pair/summary?address=0xb2ba36ee6ba6113a914f3e8812a0df094dec5994&foo=1234').json()
-    #         self.last_dextools_update_time = now
+    def get_dextools(self):
+        now = datetime.now()
+        if now > self.last_dextools_update_time + self.dextools_interval:
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36"}
+            self.dextools_result = requests.get(
+                'https://www.dextools.io/chain-cronos/api/pair/summary?address=0xb2ba36ee6ba6113a914f3e8812a0df094dec5994&foo=1234',
+                headers=headers).json()
+            self.last_dextools_update_time = now
 
     # def get_crodex(self):
     #     now = datetime.now()
@@ -108,3 +111,18 @@ class CroMoonStats:
     @property
     def holder_count(self):
         return self.get_token_holder_count()
+
+    @property
+    def volume_24(self):
+        self.get_dextools()
+        return f'{self.dextools_result.get("volume24", 0):,.2f}'
+
+    @property
+    def change_24(self):
+        self.get_dextools()
+        price = self.dextools_result.get('price', 0)
+        price24 = self.dextools_result.get('price24h', '0')
+        if price == 0 or price24 == 0:
+            return 'n/a'
+        change = (price - price24)/price24
+        return f'{change:+.2%}'
