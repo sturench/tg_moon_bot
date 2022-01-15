@@ -84,11 +84,11 @@ def get_stats(update, context):
 
 
 def tokenomics_detail(update, context):
-    update.message.reply_text(TOKENOMICS_TEXT, parse_mode=telegram.ParseMode.HTML)
+    update.message.reply_text(TOKENOMICS_TEXT, parse_mode=telegram.ParseMode.HTML, disable_web_page_preview=True)
 
 
 def tokenomics(update, context):
-    update.message.reply_text(TOKENOMICS_TEXT, parse_mode=telegram.ParseMode.HTML)
+    update.message.reply_text(TOKENOMICS_SHORT, parse_mode=telegram.ParseMode.HTML, disable_web_page_preview=True)
 
 
 def main():
