@@ -49,7 +49,7 @@ def get_stats(update, context):
         '<b><u>CroMoon Statistics</u></b> <i>(updated every 5 minutes)</i>\n',
         'Current price:          ${}'.format(cromoon.price),
         'Current MC:             ${}'.format(cromoon.market_cap),
-        'Holders:                  {}'.format(cromoon.holder_count),
+        'Holders:                   {}'.format(cromoon.holder_count),
         'Burn wallet (0x0dead):  {} ({})'.format(cromoon.burn_percent,
                                                  cromoon.burn_tokens),
     ]
