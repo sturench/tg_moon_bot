@@ -50,7 +50,7 @@ def get_stats(update, context):
         'Current price:          ${} ({} 24H)'.format(cromoon.price, cromoon.change_24),
         'Current MC:             ${}'.format(cromoon.market_cap),
         'Holders:                   {}'.format(cromoon.holder_count),
-        '24H Volume:             ${}'.format(cromoon.volume_24),
+        '24H Volume:            ${}'.format(cromoon.volume_24),
         'Burn wallet (0x0dead):  {} ({})'.format(cromoon.burn_percent,
                                                  cromoon.burn_tokens),
     ]
