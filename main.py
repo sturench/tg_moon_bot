@@ -12,6 +12,7 @@ bot.
 """
 
 import logging
+import os
 
 import telegram
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
@@ -22,7 +23,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
                     level=logging.INFO)
 
 logger = logging.getLogger(__name__)
-
+api_key = os.environ.get('API_KEY', 'NONE')
 cromoon = CroMoonStats()
 
 
@@ -48,7 +49,8 @@ def get_stats(update, context):
         '<b><u>CroMoon Statistics</u></b> <i>(updated every 5 minutes)</i>\n',
         'Current price:                 ${}'.format(f'{cromoon.get_current_price():.12f}'),
         'Current MC:                    ${}'.format(f'{cromoon.get_market_cap():,.2f}'),
-        'Burn wallet (0x0dead):   {} ({})'.format(f'{cromoon.get_percent_burned():.2%}', cromoon.get_dead_wallet_string()),
+        'Burn wallet (0x0dead):   {} ({})'.format(f'{cromoon.get_percent_burned():.2%}',
+                                                  cromoon.get_dead_wallet_string()),
     ]
     update.message.reply_text('\n'.join(reply_lines), parse_mode=telegram.ParseMode.HTML)
 
@@ -58,7 +60,7 @@ def main():
     # Create the Updater and pass it your bot's token.
     # Make sure to set use_context=True to use the new context based callbacks
     # Post version 12 this will no longer be necessary
-    updater = Updater("5087275185:AAHk0apGHrgGBB7nSFl23pRThVoZXKL9Dwg", use_context=True)
+    updater = Updater(api_key, use_context=True)
     global cromoon
 
     # Get the dispatcher to register handlers
