@@ -1,2 +1,6 @@
 requests~=2.27.1
 python-telegram-bot~=13.10
+web3~=5.26.0
+pyTelegramBotAPI~=4.3.1
+SQLAlchemy~=1.4.31
+alembic~=1.7.5
