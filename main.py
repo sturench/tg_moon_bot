@@ -182,7 +182,7 @@ def get_wallet_response(message):
         # ask for wallet
         wait_for_wallet(message.from_user.id)
         bot.send_chat_action(message.chat.id, 'typing')
-        bot.send_message(message.chat.id, "What is the wallet you want to track reflections on?",
+        bot.send_message(message.chat.id, "What is the wallet you want to track reflections and value on?\n\nYou have to copy/paste your PUBLIC wallet address into the chat.  I will only start showing the good stuff after you see a message that I set your wallet!",
                          parse_mode=telegram.ParseMode.HTML)
     else:
         # DM the person and ask
