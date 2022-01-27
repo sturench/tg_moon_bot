@@ -62,6 +62,14 @@ To get the latest stats type /stats\n
 To read about tokenomics type /tokenomics\n
 To track your reflections type /reflections\n
 To check your CroMoon value type /value\n
+To get help type /help.
+"""
+
+HELP_MSG_with_forget = """
+To get the latest stats type /stats\n
+To read about tokenomics type /tokenomics\n
+To track your reflections type /reflections\n
+To check your CroMoon value type /value\n
 To have me forget your wallet type /forget\n
 To get help type /help.
 """
