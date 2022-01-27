@@ -369,11 +369,14 @@ def main():
     """Start the bot."""
     global cromoon
 
-    while True:
-        try:
-            bot.polling()
-        except Exception as e:
-            logger.error(e)
+    bot.infinity_polling()
+    # while True:
+    #     try:
+    #         bot.infinity_polling(non_stop=True)
+    #         bot.close()
+    #         bot.stop_bot()
+    #     except Exception as e:
+    #         logger.error(e)
 
 
 if __name__ == '__main__':
