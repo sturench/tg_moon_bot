@@ -22,7 +22,7 @@ from CroMoonStats import CroMoonStats
 from TelegramMappings import User, Wallet, Session
 
 logger = telebot.logger
-telebot.logger.setLevel(logging.WARNING)  # Outputs debug messages to console.
+telebot.logger.setLevel(logging.DEBUG)  # Outputs debug messages to console.
 
 api_key = os.environ.get('API_KEY', 'NONE')
 bot = telebot.TeleBot(api_key)
@@ -132,8 +132,11 @@ def reflections_command(message):
 
 @bot.message_handler(commands=['value', 'v'])
 def value_command(message):
+    logger.debug('About to initialize user in value_command')
     initialize_user(message.from_user.id)
+    logger.debug('user initialized in value_command')
     wallet = get_user_wallet(message.from_user.id)
+    logger.debug('got wallet: {}'.format(wallet))
     try:
         price = float(cromoon.price)
     except Exception as e:
@@ -145,7 +148,9 @@ def value_command(message):
             pre_text = 'Hey, I moved our chat to DM for privacy and to reduce clutter in the main channel\n'
             bot.reply_to(message, pre_text, parse_mode=telegram.ParseMode.HTML)
         msg_dest = message.from_user.id
+        logger.debug('Getting tracker in value_command')
         tracker = get_reflection_tracker(message.from_user.id)
+        logger.debug('Tracker in value_command: {}'.format(tracker))
         if tracker is not None:
             if price is not None:
                 value = tracker.balance * price
@@ -158,7 +163,7 @@ def value_command(message):
                              parse_mode=telegram.ParseMode.HTML,
                              disable_web_page_preview=True)
         else:
-            initialize_user(msg_dest)
+            logger.debug('About to send request to set wallet')
             bot.send_message(msg_dest, "Please set your wallet first")
     else:
         get_wallet_response(message)
