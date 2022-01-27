@@ -134,7 +134,11 @@ def reflections_command(message):
 def value_command(message):
     initialize_user(message.from_user.id)
     wallet = get_user_wallet(message.from_user.id)
-    price = float(cromoon.price)
+    try:
+        price = float(cromoon.price)
+    except Exception as e:
+        logger.exception("Price not a float: {}".format(e))
+        price = None
 
     if wallet is not None:
         if message.chat.type != "private":
@@ -143,8 +147,11 @@ def value_command(message):
         msg_dest = message.from_user.id
         tracker = get_reflection_tracker(message.from_user.id)
         if tracker is not None:
-            value = tracker.balance * price
-            ret_val = f'${value:,.2f}'
+            if price is not None:
+                value = tracker.balance * price
+                ret_val = f'${value:,.2f}'
+            else:
+                ret_val = 'Unavailable'
             bot.send_message(msg_dest,
                              'Your CroMoon is currently worth: {}\n<i>BETA: Values may be incorrect.</i>'.format(
                                  ret_val),
