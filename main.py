@@ -327,13 +327,13 @@ def is_user_waiting_for_wallet(user_id):
 
 
 def get_user_wallet(user_id):
-    if user_data.get(user_id, []).get('wallet') is None:
+    if user_data.get(user_id, {}).get('wallet') is None:
         initialize_user(user_id)
     return user_data[user_id]['wallet']
 
 
 def get_reflection_tracker(user_id):
-    if user_data.get(user_id, []).get('tracker') is None:
+    if user_data.get(user_id, {}).get('tracker') is None:
         initialize_user(user_id)
     return user_data[user_id]['tracker']
 
