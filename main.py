@@ -213,13 +213,17 @@ def get_wallet_response(message):
 
 @bot.message_handler(commands=['forget', 'f'])
 def send_wallet_forgotten(message):
-    user = initialize_user(message.from_user.id)
+    userid = initialize_user(message.from_user.id)
     session = Session()
+    user = session.query(User).filter(User.id == userid).first()
     try:
         user.wallets = []
-        session.commit()
     except Exception as e:
+        logger.exception(e)
         session.rollback()
+    else:
+        session.commit()
+    session.close()
     bot.reply_to(message, "You have been forgotten", parse_mode=telegram.ParseMode.HTML)
 
 
@@ -289,7 +293,9 @@ def initialize_user(user_id):
             user_data[user_id]['wallet'] = user.wallets[0]  # type: [Wallet]
             user_data[user_id]['waiting_for_wallet'] = False
             user_data[user_id]['tracker'] = ReflectionTracker(user.wallets[0].wallet_address)
-    return user
+    userid = user.id
+    session.close()
+    return userid
 
 
 def user_exists(user_id) -> bool:
@@ -313,11 +319,32 @@ def get_db_user(user_id):
         return users[0]
 
 
-def set_user_wallet(user_id, wallet):
-    user = initialize_user(user_id)
-    user.add_wallet(wallet)
-    user_data[user_id]['wallet'] = wallet
-    user_data[user_id]['tracker'] = ReflectionTracker(wallet)
+def set_user_wallet(user_id, wallet_address):
+    userid = initialize_user(user_id)
+    with Session() as session:
+        try:
+            wallet = Wallet(wallet_address)
+            session.add(wallet)
+        except Exception as e:
+            logger.exception(e)
+            session.rollback()
+            session.clos()
+            return
+        else:
+            session.commit()
+
+        try:
+            user = session.query(User).filter(User.id == userid).first()
+            user.wallets.append(wallet)
+            session.add(user)
+        except Exception as e:
+            logger.exception(e)
+            session.rollback()
+        else:
+            session.commit()
+
+    user_data[user_id]['wallet'] = wallet_address
+    user_data[user_id]['tracker'] = ReflectionTracker(wallet_address)
     user_data[user_id]['waiting_for_wallet'] = False
 
 

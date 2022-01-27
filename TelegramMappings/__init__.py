@@ -63,18 +63,6 @@ class User(Base):
         except Exception as e:
             session.rollback()
 
-    def add_wallet(self, wallet_address):
-        session = Session()
-        try:
-            wallet = Wallet(wallet_address)
-            session.add(wallet)
-            session.commit()
-            self.wallets.append(wallet)
-            session.add(self)
-            session.commit()
-        except Exception as e:
-            session.rollback()
-
 
 class Wallet(Base):
     __tablename__ = 'wallet'
