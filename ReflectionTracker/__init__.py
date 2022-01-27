@@ -9,7 +9,7 @@ cromoon_contract_address = "0x7D30c36f845d1dEe79f852abF3A8A402fAdF3b53".lower()
 
 
 class ReflectionTracker:
-    def __init__(self, wallet_address: str, initialize_data: bool = True):
+    def __init__(self, wallet_address: str, initialize_data: bool = True, cromoon=None):
         self._wallet_address = wallet_address.lower()
         self._last_block = 0
         self._purchased_balance = 0
@@ -20,6 +20,7 @@ class ReflectionTracker:
         self._purchases = []
         self._sales = []
         self._transactions = []
+        self._cromoon = cromoon
         if initialize_data:
             self.get_all_transactions()
             self.get_current_balance()
@@ -135,6 +136,19 @@ class ReflectionTracker:
             "<b>Current Balance</b>:    {}".format(self.balance_str),
             "<b>Total Reflections</b>:  {} ({} of total)".format(self.reflections_str,
                                                                  self.reflections_percent_str),
+        ]
+        if self._cromoon is not None:
+            try:
+                price = float(self._cromoon.price)
+            except Exception as e:
+                price = None
+            if price is not None:
+                value = self.balance * price
+                ref_val = f'${value:,.2f}'
+            else:
+                ref_val = 'Unavailable'
+            reply_lines.append("<b>MOON Value</b>:   {}".format(ref_val))
+        reply_lines += [
             "<a href='https://cronoscan.com/token/{}?a={}'>Transaction Details</a>".format(cromoon_contract_address,
                                                                                            self._wallet_address),
             "<i>BETA: Values may be incorrect.  Please consult Cronoscan if you are unsure</i>"

@@ -292,7 +292,7 @@ def initialize_user(user_id):
         if len(user.wallets) == 1:
             user_data[user_id]['wallet'] = user.wallets[0]  # type: [Wallet]
             user_data[user_id]['waiting_for_wallet'] = False
-            user_data[user_id]['tracker'] = ReflectionTracker(user.wallets[0].wallet_address)
+            user_data[user_id]['tracker'] = ReflectionTracker(user.wallets[0].wallet_address, cromoon=cromoon)
     userid = user.id
     session.close()
     return userid
@@ -344,7 +344,7 @@ def set_user_wallet(user_id, wallet_address):
             session.commit()
 
     user_data[user_id]['wallet'] = wallet_address
-    user_data[user_id]['tracker'] = ReflectionTracker(wallet_address)
+    user_data[user_id]['tracker'] = ReflectionTracker(wallet_address, cromoon=cromoon)
     user_data[user_id]['waiting_for_wallet'] = False
 
 
