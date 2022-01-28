@@ -75,7 +75,7 @@ To get help type /help.
 """
 
 
-@bot.message_handler(commands=['start'])
+@bot.message_handler(commands=['start'], chat_types=['private'])
 def start_command(message):
     bot.send_message(message.chat.id, 'Greetings! I can help you with CroMoon info.\n' + HELP_MSG)
     get_wallet_response(message)
@@ -126,7 +126,7 @@ def reflections_command(message):
             pre_text = 'Hey, I moved our chat to DM for privacy and to reduce clutter in the main channel\n'
             bot.reply_to(message, pre_text, parse_mode=telegram.ParseMode.HTML)
         msg_dest = message.from_user.id
-        tracker = get_reflection_tracker(message.from_user.id) # type: ReflectionTracker
+        tracker = get_reflection_tracker(message.from_user.id)  # type: ReflectionTracker
         tracker.get_recent_transactions()
         if tracker is not None:
             bot.send_message(msg_dest, '\n'.join(tracker.reflection_stat_str),
@@ -184,15 +184,17 @@ def get_wallet_response(message):
         # ask for wallet
         wait_for_wallet(message.from_user.id)
         bot.send_chat_action(message.chat.id, 'typing')
-        bot.send_message(message.chat.id, "What is the wallet you want to track reflections and value on?\n\nYou have to copy/paste your PUBLIC wallet address into the chat.  I will only start showing the good stuff after you see a message that I set your wallet!",
+        bot.send_message(message.chat.id,
+                         "What is the wallet you want to track reflections and value on?\n\nYou have to copy/paste your PUBLIC wallet address into the chat.  I will only start showing the good stuff after you see a message that I set your wallet!",
                          parse_mode=telegram.ParseMode.HTML)
     else:
         # DM the person and ask
         wait_for_wallet(message.from_user.id)
         keyboard = telebot.types.InlineKeyboardMarkup()
         keyboard.add(telebot.types.InlineKeyboardButton('Open My DM', url='t.me/CroMoon_Statbot'))
-        bot.reply_to(message, "For privacy reasons, let's move to DM\n" +
-                     'When you get there, type /reflections or /start to get going.', reply_markup=keyboard)
+        bot.reply_to(message, "For privacy reasons, let's move to <a href='t.me/CroMoon_Statbot'>DM</a>\n" +
+                     "When you get there, type /reflections or /start to get going.\n<i>If you see this message and you weren't the one to call me, you can still click the DM link</i>",
+                     reply_markup=keyboard, parse_mode=telegram.ParseMode.HTML, disable_web_page_preview=True)
 
 
 # @bot.callback_query_handler(func=lambda call: True)
@@ -251,7 +253,8 @@ def send_reflection_request(message, user_id):
 
 def send_wallet_request(message):
     bot.send_chat_action(message.chat.id, 'typing')
-    bot.send_message(message.chat.id, "What is the wallet you want to track reflections and value on?\n\nYou have to copy/paste your PUBLIC wallet address into the chat.  I will only start showing the good stuff after you see a message that I set your wallet!",
+    bot.send_message(message.chat.id,
+                     "What is the wallet you want to track reflections and value on?\n\nYou have to copy/paste your PUBLIC wallet address into the chat.  I will only start showing the good stuff after you see a message that I set your wallet!",
                      parse_mode=telegram.ParseMode.HTML)
 
 
