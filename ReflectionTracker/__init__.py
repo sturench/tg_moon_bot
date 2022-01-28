@@ -131,6 +131,7 @@ class ReflectionTracker:
     @property
     def reflection_stat_str(self):
         self.get_all_transactions()
+        self.get_current_balance()
         reply_lines = [
             "<b>Purchased MOON</b>:     {}".format(self.purchased_str),
             "<b>Current Balance</b>:    {}".format(self.balance_str),
