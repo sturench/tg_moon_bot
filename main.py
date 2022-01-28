@@ -127,7 +127,6 @@ def reflections_command(message):
             bot.reply_to(message, pre_text, parse_mode=telegram.ParseMode.HTML)
         msg_dest = message.from_user.id
         tracker = get_reflection_tracker(message.from_user.id)  # type: ReflectionTracker
-        tracker.get_recent_transactions()
         if tracker is not None:
             bot.send_message(msg_dest, '\n'.join(tracker.reflection_stat_str),
                              parse_mode=telegram.ParseMode.HTML,
@@ -159,7 +158,6 @@ def value_command(message):
         msg_dest = message.from_user.id
         logger.debug('Getting tracker in value_command')
         tracker = get_reflection_tracker(message.from_user.id)
-        tracker.get_recent_transactions()
         logger.debug('Tracker in value_command: {}'.format(tracker))
         if tracker is not None:
             if price is not None:
