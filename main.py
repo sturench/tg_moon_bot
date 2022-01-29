@@ -64,7 +64,7 @@ YOU_DID_GET_REFLECTIONS = """
 Every wallet that holds MOON gets reflections with every buy and sell.
 There are <u>no transactions visible in explorer</u>.
 However, your token balance <u>has grown</u>!
-You can verify that with screenshotting your wallet or using our /reflection bot.
+You can verify that with screenshotting your wallet or using our <a href="t.me/CroMoon_Statbot">reflection bot</a>.
 """
 
 HELP_MSG_without_forget = """
@@ -422,6 +422,7 @@ def get_reflection_tracker(user_id):
 def main():
     """Start the bot."""
     global cromoon
+
 
     bot.infinity_polling()
     # while True:
