@@ -293,7 +293,8 @@ def wallet_address_message(message):
         set_user_wallet(message.from_user.id, message.text)
         bot.send_message(
             message.chat.id, "I set your wallet address to {}\n".format(
-                message.text) + "You can now get reflections by typing /reflections\n" + "/help is also available",
+                message.text) + "You can now get reflections by typing /reflections\n" + "/help is also available" +
+            DONATION_MSG,
             parse_mode=telegram.ParseMode.HTML,
             disable_web_page_preview=True, reply_markup=types.ReplyKeyboardRemove())
 
