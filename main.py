@@ -102,13 +102,13 @@ def periodic_stat_donation():
         return ""
 
 
-@bot.message_handler(commands=['start'], chat_types=['private'])
+@bot.message_handler(commands=['start', 'Start'], chat_types=['private'])
 def start_command(message):
     bot.send_message(message.chat.id, 'Greetings! I can help you with CroMoon info.\n' + HELP_MSG + DONATION_MSG + '\n')
     get_wallet_response(message)
 
 
-@bot.message_handler(commands=['help'])
+@bot.message_handler(commands=['help', 'Help'])
 def help_command(message):
     """Send a message when the command /help is issued."""
     keyboard = telebot.types.InlineKeyboardMarkup()
@@ -118,7 +118,7 @@ def help_command(message):
     bot.send_message(message.chat.id, HELP_MSG + DONATION_MSG, reply_markup=keyboard)
 
 
-@bot.message_handler(commands=['stats'])
+@bot.message_handler(commands=['stats', 'Stats'])
 def get_stats(message):
     reply_lines = [
         '<b><u>CroMoon Statistics</u></b> <i>(updated every 5 minutes)</i>\n',
@@ -140,13 +140,13 @@ def tokenomics_detail(message):
         message.chat.id, TOKENOMICS_TEXT, parse_mode=telegram.ParseMode.HTML, disable_web_page_preview=True)
 
 
-@bot.message_handler(commands=['tokenomics'])
+@bot.message_handler(commands=['tokenomics', 'Tokenomics'])
 def tokenomics(message):
     bot.send_message(
         message.chat.id, TOKENOMICS_SHORT, parse_mode=telegram.ParseMode.HTML, disable_web_page_preview=True)
 
 
-@bot.message_handler(commands=['reflections', 'reflection', 'r'])
+@bot.message_handler(commands=['reflections', 'reflection', 'r', 'R', 'Reflections', 'Reflection'])
 def reflections_command(message):
     wallet = get_user_wallet(message.from_user.id)
     if wallet is not None:
@@ -166,7 +166,7 @@ def reflections_command(message):
         get_wallet_response(message)
 
 
-@bot.message_handler(commands=['value', 'v'])
+@bot.message_handler(commands=['value', 'v', 'Value'])
 def value_command(message):
     logger.debug('About to initialize user in value_command')
     initialize_user(message.from_user.id)
@@ -241,7 +241,7 @@ def get_wallet_response(message):
 #     send_wallet_forgotten(query.message, user_id)
 
 
-@bot.message_handler(commands=['forget', 'f'])
+@bot.message_handler(commands=['forget', 'f', 'Forget'])
 def send_wallet_forgotten(message):
     userid = initialize_user(message.from_user.id)
     with Session() as session:
