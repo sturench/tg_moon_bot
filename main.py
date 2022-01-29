@@ -29,7 +29,7 @@ api_key = os.environ.get('API_KEY', 'NONE')
 bot = telebot.TeleBot(api_key)
 cromoon = CroMoonStats()
 
-BOT_DONATION_ADDRESS = '0x28f9726A63000224f0D6A1FD406F9Eb71439F6Cc Cronos/Etherium ONLY'
+BOT_DONATION_ADDRESS = '0x28f9726A63000224f0D6A1FD406F9Eb71439F6Cc Cronos/Ethereum ONLY'
 
 user_data = {}
 
