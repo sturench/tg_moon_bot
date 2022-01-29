@@ -53,7 +53,7 @@ The Afterburner program will simultaneously induce community hype whilst creatin
 
 TOKENOMICS_SHORT = '''
 <b><u>Transaction Tax</u></b>: 10%
-<b><u>Reflections</u></b>: Half of the tax is automatically distributed to all token holders. Paid automatically on every transaction. There is not a transaction visible in explorer, you may screenshot your wallet and check again later. Or check out /reflections to see yours!
+<b><u>Reflections</u></b>: Half of the tax is automatically distributed to all token holders. Paid automatically on every transaction. There is not a transaction visible in explorer, you may screenshot your wallet and check again later. Or check out <a href='t.me/CroMoon_Statbot'>reflections bot</a> to see yours!
 <b><u>LP acquisition</u></b>: The other half of the tax is added to the Liquidity Pool.
 <b><u>Afterburner</u></b>: Randomly, once a week, half of LP acquired (2.5% of total) by taxes are burned. The CRO is used to buy more MOON which is also burned.
 <b><u>Blackhole</u></b>: Since a dead wallet is also a token holder, it gains reflections along with other holders.
