@@ -12,6 +12,7 @@ bot.
 """
 import logging
 import os
+import random
 import telegram
 import telebot
 
@@ -27,6 +28,8 @@ telebot.logger.setLevel(logging.DEBUG)  # Outputs debug messages to console.
 api_key = os.environ.get('API_KEY', 'NONE')
 bot = telebot.TeleBot(api_key)
 cromoon = CroMoonStats()
+
+BOT_DONATION_ADDRESS = '0x28f9726A63000224f0D6A1FD406F9Eb71439F6Cc'
 
 user_data = {}
 
@@ -50,48 +53,72 @@ The Afterburner program will simultaneously induce community hype whilst creatin
 
 TOKENOMICS_SHORT = '''
 <b><u>Transaction Tax</u></b>: 10%
-<b><u>Reflections</u></b>: Half of the tax is automatically distributed to all token holders. Paid automatically on every transaction. There is not a transaction in explorer, so currently best to screenshot your wallet and check again later. Check out /reflections to see yours!
+<b><u>Reflections</u></b>: Half of the tax is automatically distributed to all token holders. Paid automatically on every transaction. There is not a transaction visible in explorer, you may screenshot your wallet and check again later. Or check out /reflections to see yours!
 <b><u>LP acquisition</u></b>: The other half of the tax is added to the Liquidity Pool.
 <b><u>Afterburner</u></b>: Randomly, once a week, half of LP acquired (2.5% of total) by taxes are burned. The CRO is used to buy more MOON which is also burned.
 <b><u>Blackhole</u></b>: Since a dead wallet is also a token holder, it gains reflections along with other holders.
 <a href="https://medium.com/@CroMoon?p=1a9a3208e548">Addition details in Medium</a>
 '''
 
+HELP_MSG_without_forget = """
+To get the latest stats type /stats
+To read about tokenomics type /tokenomics
+To track your reflections type /reflections
+To check your CroMoon value type /value
+To get help type /help.
+"""
+
 HELP_MSG = """
-To get the latest stats type /stats\n
-To read about tokenomics type /tokenomics\n
-To track your reflections type /reflections\n
-To check your CroMoon value type /value\n
-To get help type /help.
+To get the latest stats - /stats
+To read about tokenomics - /tokenomics
+To track your reflections - /reflections
+To check your CroMoon value - /value
+To have me forget your wallet - /forget
+To get help - /help.
 """
 
-HELP_MSG_with_forget = """
-To get the latest stats type /stats\n
-To read about tokenomics type /tokenomics\n
-To track your reflections type /reflections\n
-To check your CroMoon value type /value\n
-To have me forget your wallet type /forget\n
-To get help type /help.
-"""
+DONATION_MSG = """
+\nIf you enjoy this bot, please consider donating something to the creator - he did this on spare time for the community ({})
+""".format(BOT_DONATION_ADDRESS)
+
+donation_message_probability = .2
+stat_donation_period = 20
+stat_calls = 0
 
 
-@bot.message_handler(commands=['start'], chat_types=['private'])
+def random_show_donation():
+    if random.random() < donation_message_probability:
+        return DONATION_MSG
+    else:
+        return ''
+
+
+def periodic_stat_donation():
+    global stat_calls
+    stat_calls += 1
+    if stat_calls % stat_donation_period == 0:
+        return DONATION_MSG
+    else:
+        return ""
+
+
+@bot.message_handler(commands=['start', 'Start'], chat_types=['private'])
 def start_command(message):
-    bot.send_message(message.chat.id, 'Greetings! I can help you with CroMoon info.\n' + HELP_MSG)
+    bot.send_message(message.chat.id, 'Greetings! I can help you with CroMoon info.\n' + HELP_MSG + DONATION_MSG + '\n')
     get_wallet_response(message)
 
 
-@bot.message_handler(commands=['help'])
+@bot.message_handler(commands=['help', 'Help'])
 def help_command(message):
     """Send a message when the command /help is issued."""
     keyboard = telebot.types.InlineKeyboardMarkup()
     keyboard.add(
         telebot.types.InlineKeyboardButton('Message the developer', url='telegram.me/ConsiderChaos')
     )
-    bot.send_message(message.chat.id, HELP_MSG, reply_markup=keyboard)
+    bot.send_message(message.chat.id, HELP_MSG + DONATION_MSG, reply_markup=keyboard)
 
 
-@bot.message_handler(commands=['stats'])
+@bot.message_handler(commands=['stats', 'Stats'])
 def get_stats(message):
     reply_lines = [
         '<b><u>CroMoon Statistics</u></b> <i>(updated every 5 minutes)</i>\n',
@@ -103,7 +130,8 @@ def get_stats(message):
                                                  cromoon.burn_tokens),
     ]
     bot.send_message(
-        message.chat.id, '\n'.join(reply_lines), parse_mode=telegram.ParseMode.HTML, disable_web_page_preview=True)
+        message.chat.id, '\n'.join(reply_lines) + periodic_stat_donation(), parse_mode=telegram.ParseMode.HTML,
+        disable_web_page_preview=True)
 
 
 @bot.message_handler(commands=['tokenomics_detail'])
@@ -112,13 +140,13 @@ def tokenomics_detail(message):
         message.chat.id, TOKENOMICS_TEXT, parse_mode=telegram.ParseMode.HTML, disable_web_page_preview=True)
 
 
-@bot.message_handler(commands=['tokenomics'])
+@bot.message_handler(commands=['tokenomics', 'Tokenomics'])
 def tokenomics(message):
     bot.send_message(
         message.chat.id, TOKENOMICS_SHORT, parse_mode=telegram.ParseMode.HTML, disable_web_page_preview=True)
 
 
-@bot.message_handler(commands=['reflections', 'reflection', 'r'])
+@bot.message_handler(commands=['reflections', 'reflection', 'r', 'R', 'Reflections', 'Reflection'])
 def reflections_command(message):
     wallet = get_user_wallet(message.from_user.id)
     if wallet is not None:
@@ -128,7 +156,7 @@ def reflections_command(message):
         msg_dest = message.from_user.id
         tracker = get_reflection_tracker(message.from_user.id)  # type: ReflectionTracker
         if tracker is not None:
-            bot.send_message(msg_dest, '\n'.join(tracker.reflection_stat_str),
+            bot.send_message(msg_dest, '\n'.join(tracker.reflection_stat_str) + random_show_donation(),
                              parse_mode=telegram.ParseMode.HTML,
                              disable_web_page_preview=True)
         else:
@@ -138,7 +166,7 @@ def reflections_command(message):
         get_wallet_response(message)
 
 
-@bot.message_handler(commands=['value', 'v'])
+@bot.message_handler(commands=['value', 'v', 'Value'])
 def value_command(message):
     logger.debug('About to initialize user in value_command')
     initialize_user(message.from_user.id)
@@ -167,7 +195,7 @@ def value_command(message):
                 ret_val = 'Unavailable'
             bot.send_message(msg_dest,
                              'Your CroMoon is currently worth: {}\n<i>BETA: Values may be incorrect.</i>'.format(
-                                 ret_val),
+                                 ret_val) + random_show_donation(),
                              parse_mode=telegram.ParseMode.HTML,
                              disable_web_page_preview=True)
         else:
@@ -183,7 +211,7 @@ def get_wallet_response(message):
         wait_for_wallet(message.from_user.id)
         bot.send_chat_action(message.chat.id, 'typing')
         bot.send_message(message.chat.id,
-                         "What is the wallet you want to track reflections and value on?\n\nYou have to copy/paste your PUBLIC wallet address into the chat.  I will only start showing the good stuff after you see a message that I set your wallet!",
+                         "What wallet do you want to track reflections and value on?\nYou have to copy/paste your PUBLIC wallet address into the chat.  I will only start showing the good stuff after you see a message that I set your wallet!",
                          parse_mode=telegram.ParseMode.HTML)
     else:
         # DM the person and ask
@@ -213,20 +241,23 @@ def get_wallet_response(message):
 #     send_wallet_forgotten(query.message, user_id)
 
 
-@bot.message_handler(commands=['forget', 'f'])
+@bot.message_handler(commands=['forget', 'f', 'Forget'])
 def send_wallet_forgotten(message):
     userid = initialize_user(message.from_user.id)
-    session = Session()
-    user = session.query(User).filter(User.id == userid).first()
-    try:
-        user.wallets = []
-    except Exception as e:
-        logger.exception(e)
-        session.rollback()
-    else:
-        session.commit()
-    session.close()
-    bot.reply_to(message, "You have been forgotten", parse_mode=telegram.ParseMode.HTML)
+    with Session() as session:
+        user = session.query(User).filter(User.id == userid).first()
+        try:
+            user.wallets = []
+        except Exception as e:
+            logger.exception(e)
+            session.rollback()
+            bot.reply_to(message, "Something went wrong forgetting you.  Try again.",
+                         parse_mode=telegram.ParseMode.HTML)
+        else:
+            session.commit()
+            user_data.pop(user.telegram_id, None)
+            bot.reply_to(message, "You have been forgotten", parse_mode=telegram.ParseMode.HTML)
+        session.close()
 
 
 def set_wallet_callback(query):
@@ -262,7 +293,8 @@ def wallet_address_message(message):
         set_user_wallet(message.from_user.id, message.text)
         bot.send_message(
             message.chat.id, "I set your wallet address to {}\n".format(
-                message.text) + "You can now get reflections by typing /reflections\n" + "/help is also available",
+                message.text) + "You can now get reflections by typing /reflections\n" + "/help is also available" +
+            DONATION_MSG,
             parse_mode=telegram.ParseMode.HTML,
             disable_web_page_preview=True, reply_markup=types.ReplyKeyboardRemove())
 
