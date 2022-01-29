@@ -148,7 +148,7 @@ class ReflectionTracker:
                 ref_val = f'${value:,.2f}'
             else:
                 ref_val = 'Unavailable'
-            reply_lines.append("<b>MOON Value</b>:   {}".format(ref_val))
+            reply_lines.append("<b>MOON Value USD</b>: {}".format(ref_val))
         reply_lines += [
             "<a href='https://cronoscan.com/token/{}?a={}'>Transaction Details</a>".format(cromoon_contract_address,
                                                                                            self._wallet_address),

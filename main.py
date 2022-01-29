@@ -213,7 +213,7 @@ def value_command(message):
             else:
                 ret_val = 'Unavailable'
             bot.send_message(msg_dest,
-                             'Your CroMoon is currently worth: {}\n<i>BETA: Values may be incorrect.</i>'.format(
+                             'Your CroMoon is currently worth (USD): {}\n<i>BETA: Values may be incorrect.</i>'.format(
                                  ret_val) + random_show_donation(),
                              parse_mode=telegram.ParseMode.HTML,
                              disable_web_page_preview=True)
