@@ -88,7 +88,7 @@ DONATION_MSG = """
 \nIf you enjoy this bot, please consider donating something to the creator - he did this on spare time for the community ({})
 """.format(BOT_DONATION_ADDRESS)
 
-donation_message_probability = .2
+donation_message_probability = .25
 stat_donation_period = 20
 stat_calls = 0
 
@@ -100,8 +100,12 @@ def random_show_donation():
         return ''
 
 
-def periodic_stat_donation():
+def periodic_stat_donation(message_type=None):
+    if message_type == 'private':
+        return random_show_donation()
     global stat_calls
+    if stat_calls > 99999999:
+        stat_calls = 0
     stat_calls += 1
     if stat_calls % stat_donation_period == 0:
         return DONATION_MSG
@@ -143,7 +147,9 @@ def get_stats(message):
                                                  cromoon.burn_tokens),
     ]
     bot.send_message(
-        message.chat.id, '\n'.join(reply_lines) + periodic_stat_donation(), parse_mode=telegram.ParseMode.HTML,
+        message.chat.id,
+        '\n'.join(reply_lines) + periodic_stat_donation(message.chat.type),
+        parse_mode=telegram.ParseMode.HTML,
         disable_web_page_preview=True)
 
 
