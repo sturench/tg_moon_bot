@@ -60,6 +60,13 @@ TOKENOMICS_SHORT = '''
 <a href="https://medium.com/@CroMoon?p=1a9a3208e548">Addition details in Medium</a>
 '''
 
+YOU_DID_GET_REFLECTIONS = """
+Every wallet that holds MOON gets reflections with every buy and sell.
+There are <u>no transactions visible in explorer</u>.
+However, your token balance <u>has grown</u>!
+You can verify that with screenshotting your wallet or using our /reflection bot.
+"""
+
 HELP_MSG_without_forget = """
 To get the latest stats type /stats
 To read about tokenomics type /tokenomics
@@ -116,6 +123,12 @@ def help_command(message):
         telebot.types.InlineKeyboardButton('Message the developer', url='telegram.me/ConsiderChaos')
     )
     bot.send_message(message.chat.id, HELP_MSG + DONATION_MSG, reply_markup=keyboard)
+
+
+@bot.message_handler(
+    commands=['yesyouhave', 'youhave', 'where_are_my_reflections', 'yes_you_have', 'you_got_reflections'])
+def explain_they_got_reflections(message):
+    bot.reply_to(message, YOU_DID_GET_REFLECTIONS, parse_mode=telegram.ParseMode.HTML)
 
 
 @bot.message_handler(commands=['stats', 'Stats'])
@@ -294,7 +307,7 @@ def wallet_address_message(message):
         bot.send_message(
             message.chat.id, "I set your wallet address to {}\n".format(
                 message.text) + "You can now get reflections by typing /reflections\n" + "/help is also available" +
-            DONATION_MSG,
+                             DONATION_MSG,
             parse_mode=telegram.ParseMode.HTML,
             disable_web_page_preview=True, reply_markup=types.ReplyKeyboardRemove())
 
