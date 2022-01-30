@@ -132,7 +132,7 @@ def help_command(message):
 @bot.message_handler(
     commands=['yesyouhave', 'youhave', 'where_are_my_reflections', 'yes_you_have', 'you_got_reflections'])
 def explain_they_got_reflections(message):
-    bot.reply_to(message, YOU_DID_GET_REFLECTIONS, parse_mode=telegram.ParseMode.HTML)
+    bot.reply_to(message, YOU_DID_GET_REFLECTIONS, parse_mode=telegram.ParseMode.HTML, disable_web_page_preview=True)
 
 
 @bot.message_handler(commands=['stats', 'Stats'])
