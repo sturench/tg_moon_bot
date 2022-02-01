@@ -145,7 +145,7 @@ def get_stats(message):
         '24H Volume:            ${}'.format(cromoon.volume_24),
         'Burn wallet (0x0dead):  {} ({})'.format(cromoon.burn_percent,
                                                  cromoon.burn_tokens),
-        'NOTE: MMF volume excluded.  Working on an improvement'
+        'NOTE: Now shows combined Crodex and MMF Volume'
     ]
     bot.send_message(
         message.chat.id,
