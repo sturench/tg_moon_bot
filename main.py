@@ -10,28 +10,44 @@ Basic Echobot example, repeats messages.
 Press Ctrl-C on the command line or send a signal to the process to stop the
 bot.
 """
+import datetime
 import logging
 import os
 import random
 import telegram
 import telebot
 
-from telebot import types
+from telebot import types, custom_filters
+from telebot.handler_backends import State, StatesGroup
+from telebot.storage import StateMemoryStorage
 
 from ReflectionTracker import ReflectionTracker
 from CroMoonStats import CroMoonStats
+from CroMoonContestSelector import CroMoonContestSelector
 from TelegramMappings import User, Wallet, Session
 
 logger = telebot.logger
 telebot.logger.setLevel(logging.DEBUG)  # Outputs debug messages to console.
 
 api_key = os.environ.get('API_KEY', 'NONE')
-bot = telebot.TeleBot(api_key)
+state_storage = StateMemoryStorage()
+bot = telebot.TeleBot(api_key, state_storage=state_storage)
 cromoon = CroMoonStats()
 
 BOT_DONATION_ADDRESS = '0x28f9726A63000224f0D6A1FD406F9Eb71439F6Cc Cronos/Ethereum ONLY'
 
 user_data = {}
+
+
+# States group.
+class ContestStates(StatesGroup):
+    start_time = State()
+    end_time = State()
+    embargo_end_time = State()
+    low_number = State()
+    high_number = State()
+    confirmation = State()
+
 
 TOKENOMICS_TEXT = '''
 Token transfers incur a 10% fee.
@@ -420,19 +436,191 @@ def get_reflection_tracker(user_id):
     return user_data[user_id]['tracker']
 
 
+def check_cancel_steps(message):
+    answer = message.text
+    if answer == u'cancel':
+        bot.reply_to(message, "OK, I cancelled the contest.  Feel free to start over any time")
+        bot.delete_state(message.from_user.id, message.chat.id)
+        return True
+    return False
+
+
+@bot.message_handler(commands=['runcontest'], is_chat_admin=True)
+def pick_winner(message):
+    pass
+    bot.reply_to(message, """\
+<u>Let's get this contest started</u>!
+
+I will gather some information and make it happen.
+You can type '<b>cancel</b>' at any time to quit this contest setup.
+
+First, tell me the start time (in <a href="https://www.epochconverter.com/">epoch</a>)    
+    """, parse_mode=telegram.ParseMode.HTML, disable_web_page_preview=True)
+    bot.set_state(message.from_user.id, ContestStates.start_time.name, message.chat.id)
+
+
+@bot.message_handler(state=ContestStates.start_time.name)
+def process_start_time_step(message):
+    if check_cancel_steps(message):
+        return
+    try:
+        if message.text == u'cheat':
+            with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
+                data['start_time'] = datetime.datetime.fromtimestamp(1644505227)
+                data['end_time'] = datetime.datetime.fromtimestamp(1644516027)
+                data['embargo_end_time'] = datetime.datetime.fromtimestamp(1644516027)
+                data['low_number'] = 50979881731
+                data['high_number'] = 50979881732
+            bot.reply_to(message, "Say '<b>pick</b>' to cheat")
+            bot.set_state(message.from_user.id, ContestStates.confirmation.name, message.chat.id)
+            return
+        time = int(message.text)
+        epoch_time = datetime.datetime.fromtimestamp(time, tz=datetime.timezone.utc)
+        with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
+            data['start_time'] = epoch_time
+        bot.reply_to(message, "What is the end time of the contest?")
+        bot.set_state(message.from_user.id, ContestStates.end_time.name, message.chat.id)
+    except Exception as e:
+        bot.reply_to(message, "That didn't look like a time to me, please try giving start time again")
+
+
+@bot.message_handler(state=ContestStates.end_time.name)
+def process_end_time_step(message):
+    if check_cancel_steps(message):
+        return
+    try:
+        time = int(message.text)
+        epoch_time = datetime.datetime.fromtimestamp(time, tz=datetime.timezone.utc)
+        with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
+            data['end_time'] = epoch_time
+        bot.reply_to(message, "What is the end of the no-sale window, or 'now'?")
+        bot.set_state(message.from_user.id, ContestStates.embargo_end_time.name, message.chat.id)
+    except Exception as e:
+        bot.reply_to(message, "That didn't look like a time to me, please try giving end time again")
+
+
+@bot.message_handler(state=ContestStates.embargo_end_time.name)
+def process_embargo_end_time_step(message):
+    if check_cancel_steps(message):
+        return
+    try:
+        if message.text == u'now':
+            epoch_time = datetime.datetime.now(tz=datetime.timezone.utc)
+        else:
+            time = int(message.text)
+            epoch_time = datetime.datetime.fromtimestamp(time, tz=datetime.timezone.utc)
+        with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
+            data['embargo_end_time'] = epoch_time
+        bot.reply_to(message, """
+Now let's pick our purchase target. We will pick a random number between two numbers...
+What is the low number?      
+        """)
+        bot.set_state(message.from_user.id, ContestStates.low_number.name, message.chat.id)
+    except Exception as e:
+        bot.reply_to(message,
+                     "That didn't look like number to me, please try giving end of the no sale window again")
+
+
+@bot.message_handler(state=ContestStates.low_number.name)
+def process_low_range_step(message):
+    if check_cancel_steps(message):
+        return
+    try:
+        number = float(message.text)
+        with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
+            data['low_number'] = number
+        bot.reply_to(message, """
+What is the high number?      
+        """)
+        bot.set_state(message.from_user.id, ContestStates.high_number.name, message.chat.id)
+    except Exception as e:
+        bot.reply_to(message, "That didn't look like number to me, please try giving me a low number again")
+
+
+@bot.message_handler(state=ContestStates.high_number.name)
+def process_high_range_step(message):
+    if check_cancel_steps(message):
+        return
+    try:
+        number = float(message.text)
+        with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
+            data['high_number'] = number
+            contest_data = data
+        bot.reply_to(message, """
+Alright! We are almost ready to run the contest.
+Start Time: {start_time}
+End Time: {end_time}
+End of Sales Embargo: {embargo_end_time}
+Target is a number between {low_number:,.2f} and {high_number:,.2f}      
+
+If this looks right, please type '<b>pick</b>'
+If not, type '<b>cancel</b>' and then start over
+        """.format(start_time=contest_data['start_time'].strftime('%c %Z'),
+                   end_time=contest_data['end_time'].strftime('%c %Z'),
+                   embargo_end_time=contest_data['embargo_end_time'].strftime('%c %Z'),
+                   low_number=contest_data['low_number'],
+                   high_number=contest_data['high_number']
+                   ), parse_mode=telegram.ParseMode.HTML)
+        bot.set_state(message.from_user.id, ContestStates.confirmation.name, message.chat.id)
+    except Exception as e:
+        logger.exception(e)
+        bot.reply_to(message, "That didn't look like number to me, please try giving me a high number again")
+
+
+@bot.message_handler(state=ContestStates.confirmation.name)
+def process_confirm_step(message):
+    if check_cancel_steps(message):
+        return
+    try:
+        answer = message.text
+        if answer == u'pick':
+            bot.send_chat_action(message.chat.id, 'typing')
+            bot.reply_to(message, "Running the selector....please wait")
+            bot.send_chat_action(message.chat.id, 'typing')
+            single_winner_found = False
+            contest = None
+            while not single_winner_found:
+                with bot.retrieve_data(message.from_user.id, message.chat.id) as contest_data:
+                    contest = CroMoonContestSelector(start_time=contest_data['start_time'].timestamp(),
+                                                     end_time=contest_data['end_time'].timestamp(),
+                                                     sale_embargo=contest_data['embargo_end_time'].timestamp(),
+                                                     min_num=contest_data['low_number'],
+                                                     max_num=contest_data['high_number']
+                                                     )
+                if not contest.is_tie:
+                    single_winner_found = True
+            response = """
+Congratulations to <a href="https://cronoscan.com/token/0x7d30c36f845d1dee79f852abf3a8a402fadf3b53?a={wallet}">{wallet}</a>!!
+
+The random MOON target was: {target:,.2f}
+The winner bought: {purchased:,.2f}
+They were only off by: {off_by:,.2f}
+The transaction hash is: <a href="https://cronoscan.com/tx/{txn}">{txn}</a>
+
+All of this can be verified on the blockchain using <a href="https://cronoscan.com">cronoscan.com</a>
+            """.format(wallet=contest.winning_wallets[0],
+                       target=contest.target,
+                       purchased=contest.winners[0]['tokens'],
+                       off_by=contest.off_by,
+                       txn=contest.winners[0]['txn'],
+                       )
+            bot.send_message(message.chat.id, response, parse_mode=telegram.ParseMode.HTML,
+                             disable_web_page_preview=True)
+            bot.delete_state(message.from_user.id, message.chat.id)
+        else:
+            raise Exception("Only pick or cancel are accepted here")
+    except Exception as e:
+        logger.exception(e)
+        bot.reply_to(message, "Please say '<b>pick</b>' or '<b>cancel</b>'", parse_mode=telegram.ParseMode.HTML)
+
+
 def main():
     """Start the bot."""
     global cromoon
 
-
+    bot.add_custom_filter(custom_filters.IsAdminFilter(bot))
+    bot.add_custom_filter(custom_filters.StateFilter(bot))
     bot.infinity_polling()
-    # while True:
-    #     try:
-    #         bot.infinity_polling(non_stop=True)
-    #         bot.close()
-    #         bot.stop_bot()
-    #     except Exception as e:
-    #         logger.error(e)
 
 
 if __name__ == '__main__':
