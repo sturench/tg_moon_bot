@@ -102,6 +102,7 @@ class CroMoonStats:
         return self.cronos_explorer_result.get('token_holder_count', '')
 
     def get_dexscreener(self):
+        ## NOT IN USE
         now = datetime.now()
         if now > self.dexscreener_update_time + self.dexscreener_interval:
             self.dexscreener_result = requests.get(
