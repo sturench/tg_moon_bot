@@ -14,6 +14,8 @@ import datetime
 import logging
 import os
 import random
+from time import sleep
+
 import telegram
 import telebot
 
@@ -47,6 +49,7 @@ class ContestStates(StatesGroup):
     low_number = State()
     high_number = State()
     confirmation = State()
+    reveal_winner = State()
 
 
 TOKENOMICS_TEXT = '''
@@ -478,7 +481,7 @@ def process_start_time_step(message):
                 data['embargo_end_time'] = datetime.datetime.fromtimestamp(1644516027)
                 data['low_number'] = 50979881731
                 data['high_number'] = 50979881732
-            bot.reply_to(message, "Say '<b>pick</b>' to cheat")
+            bot.reply_to(message, "Say '<b>pick</b>' to cheat", parse_mode=telegram.ParseMode.HTML)
             bot.set_state(message.from_user.id, ContestStates.confirmation.name, message.chat.id)
             return
         time = int(message.text)
@@ -519,13 +522,13 @@ def process_embargo_end_time_step(message):
         with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
             data['embargo_end_time'] = epoch_time
         bot.reply_to(message, """
-Now let's pick our purchase target. We will pick a random number between two numbers...
+Now let's set our purchase target range. I will pick a random number between two numbers...
 What is the low number?      
         """)
         bot.set_state(message.from_user.id, ContestStates.low_number.name, message.chat.id)
     except Exception as e:
         bot.reply_to(message,
-                     "That didn't look like number to me, please try giving end of the no sale window again")
+                     "That didn't look like number to me, please try giving end of the no-sale window again")
 
 
 @bot.message_handler(state=ContestStates.low_number.name)
@@ -555,12 +558,17 @@ def process_high_range_step(message):
             contest_data = data
         bot.reply_to(message, """
 Alright! We are almost ready to run the contest.
-Start Time: {start_time}
-End Time: {end_time}
-End of Sales Embargo: {embargo_end_time}
+
+<b>Start Time:</b> {start_time}
+<b>End Time:</b> {end_time}
+<b>End of Sales Embargo:</b> {embargo_end_time}
+
 Target is a number between {low_number:,.2f} and {high_number:,.2f}      
 
-If this looks right, please type '<b>pick</b>'
+
+If everything looks correct, you can type:
+   '<b>pick</b>' to select a winner but not reveal yet
+   '<b>winner</b>' to pick and reveal immediately
 If not, type '<b>cancel</b>' and then start over
         """.format(start_time=contest_data['start_time'].strftime('%c %Z'),
                    end_time=contest_data['end_time'].strftime('%c %Z'),
@@ -580,7 +588,7 @@ def process_confirm_step(message):
         return
     try:
         answer = message.text
-        if answer == u'pick':
+        if answer == u'pick' or answer == u'winner':
             bot.send_chat_action(message.chat.id, 'typing')
             bot.reply_to(message, "Running the selector....please wait")
             bot.send_chat_action(message.chat.id, 'typing')
@@ -596,7 +604,10 @@ def process_confirm_step(message):
                                                      )
                 if not contest.is_tie:
                     single_winner_found = True
-            response = """
+            with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
+                data['contest_runner'] = contest
+            if answer == u'winner':
+                response = """
 Congratulations to <a href="https://cronoscan.com/token/0x7d30c36f845d1dee79f852abf3a8a402fadf3b53?a={wallet}">{wallet}</a>!!
 
 The random MOON target was: {target:,.2f}
@@ -611,14 +622,52 @@ All of this can be verified on the blockchain using <a href="https://cronoscan.c
                        off_by=contest.off_by,
                        txn=contest.winners[0]['txn'],
                        )
-            bot.send_message(message.chat.id, response, parse_mode=telegram.ParseMode.HTML,
-                             disable_web_page_preview=True)
-            bot.delete_state(message.from_user.id, message.chat.id)
+                bot.send_message(message.chat.id, response, parse_mode=telegram.ParseMode.HTML,
+                                 disable_web_page_preview=True)
+                bot.delete_state(message.from_user.id, message.chat.id)
+            else:
+                bot.set_state(message.from_user.id, ContestStates.reveal_winner.name, message.chat.id)
+                bot.reply_to(message, "When you are ready to reveal the winner, type '<b>winner</b>'",
+                             parse_mode=telegram.ParseMode.HTML)
         else:
             raise Exception("Only pick or cancel are accepted here")
     except Exception as e:
         logger.exception(e)
         bot.reply_to(message, "Please say '<b>pick</b>' or '<b>cancel</b>'", parse_mode=telegram.ParseMode.HTML)
+
+@bot.message_handler(state=ContestStates.reveal_winner.name)
+def process_confirm_step(message):
+    if check_cancel_steps(message):
+        return
+    try:
+        answer = message.text
+        if answer == u'winner':
+            bot.send_chat_action(message.chat.id, 'typing')
+            bot.reply_to(message, "Drumroll....")
+            bot.send_chat_action(message.chat.id, 'typing')
+            sleep(2)
+            with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
+                contest = data['contest_runner']
+                response = """
+    Congratulations to <a href="https://cronoscan.com/token/0x7d30c36f845d1dee79f852abf3a8a402fadf3b53?a={wallet}">{wallet}</a>!!
+
+    The random MOON target was: {target:,.2f}
+    The winner bought: {purchased:,.2f}
+    They were only off by: {off_by:,.2f}
+    The transaction hash is: <a href="https://cronoscan.com/tx/{txn}">{txn}</a>
+
+    All of this can be verified on the blockchain using <a href="https://cronoscan.com">cronoscan.com</a>
+                """.format(wallet=contest.winning_wallets[0],
+                           target=contest.target,
+                           purchased=contest.winners[0]['tokens'],
+                           off_by=contest.off_by,
+                           txn=contest.winners[0]['txn'],
+                           )
+                bot.send_message(message.chat.id, response, parse_mode=telegram.ParseMode.HTML,
+                                 disable_web_page_preview=True)
+                bot.delete_state(message.from_user.id, message.chat.id)
+    except Exception as e:
+        logger.exception(e)
 
 
 def main():
