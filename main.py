@@ -459,6 +459,13 @@ First, tell me the start time (in <a href="https://www.epochconverter.com/">epoc
     bot.set_state(message.from_user.id, ContestStates.start_time.name, message.chat.id)
 
 
+@bot.message_handler(commands=['runcontest'], is_chat_admin=False)
+def teaser(message):
+    bot.reply_to(message, """
+Wait...what is this?!?!?
+    """)
+
+
 @bot.message_handler(state=ContestStates.start_time.name)
 def process_start_time_step(message):
     if check_cancel_steps(message):
