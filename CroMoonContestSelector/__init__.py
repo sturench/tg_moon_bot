@@ -69,8 +69,9 @@ class CroMoonContestSelector:
                     print('WARNING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Not MOON')
                 if res.get('to').lower() in self._dex_pairs:
                     hash = res.get('hash')
-                    if self.__is_sell(hash):
-                        self._sellers.append(res.get('from'))
+                    # if self.__is_sell(hash):
+                    #     self._sellers.append(res.get('from'))
+                    self._sellers.append(res.get('from'))
                 else:
                     self._transactions.append(res)
 
@@ -84,6 +85,7 @@ class CroMoonContestSelector:
                         hash, randint(10000, 99999999))).json()
                 result = raw_result.get('result', 'NONE')
                 if type(result) == str:
+                    print('sleeping')
                     sleep(.1)
                 else:
                     got_result = True
@@ -106,6 +108,7 @@ class CroMoonContestSelector:
                         hash, randint(10000, 99999999))).json()
                 result = raw_result.get('result', 'NONE')
                 if type(result) == str:
+                    print('sleeping')
                     sleep(.1)
                 else:
                     got_result = True
