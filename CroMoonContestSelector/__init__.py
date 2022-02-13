@@ -1,10 +1,18 @@
 from datetime import datetime, timedelta
 from random import randint, uniform
+from time import sleep
 
 import json
 import requests
 
 cromoon_contract_address = "0x7D30c36f845d1dEe79f852abF3A8A402fAdF3b53".lower()
+
+SWAP_ETH_FOR_EXACT = "0xfb3bdb41"  # Only winner
+DEPOSIT = "0x8dbdbe6d"
+ADD_LIQUIDITY = "0xf305d719"  # Don't exclude as seller
+REMOVE_LIQUIDITY = "0xded9382a"  # Don't consider winner
+SWAP_EXACT_TOKENS_FOR_ETH = "0x791ac947"
+TRANSFER = "0x38ed1739"  # Don't consider winner
 
 
 def get_block_number_from_timestamp(timestamp: int) -> int:
@@ -60,9 +68,55 @@ class CroMoonContestSelector:
                 if res.get('tokenSymbol') != "MOON":
                     print('WARNING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Not MOON')
                 if res.get('to').lower() in self._dex_pairs:
-                    self._sellers.append(res.get('from'))
+                    hash = res.get('hash')
+                    if self.__is_sell(hash):
+                        self._sellers.append(res.get('from'))
                 else:
                     self._transactions.append(res)
+
+    def __is_sell(self, hash):
+        try:
+            got_result = False
+            result = []
+            while not got_result:
+                raw_result = requests.get(
+                    "https://api.cronoscan.com/api?module=proxy&action=eth_getTransactionByHash&txhash={}&apikey={}".format(
+                        hash, randint(10000, 99999999))).json()
+                result = raw_result.get('result', 'NONE')
+                if type(result) == str:
+                    sleep(.1)
+                else:
+                    got_result = True
+            input_data = result.get('input')
+            method = input_data[0:10]
+            if method == ADD_LIQUIDITY:
+                return False
+            else:
+                return True
+        except Exception as e:
+            print(e)
+
+    def __is_buy(self, hash):
+        try:
+            got_result = False
+            result = []
+            while not got_result:
+                raw_result = requests.get(
+                    "https://api.cronoscan.com/api?module=proxy&action=eth_getTransactionByHash&txhash={}&apikey={}".format(
+                        hash, randint(10000, 99999999))).json()
+                result = raw_result.get('result', 'NONE')
+                if type(result) == str:
+                    sleep(.1)
+                else:
+                    got_result = True
+            input_data = result.get('input')
+            method = input_data[0:10]
+            if method == SWAP_ETH_FOR_EXACT:
+                return True
+            else:
+                return False
+        except Exception as e:
+            print(e)
 
     def __find_winners(self) -> list:
         for transaction in self._transactions:
@@ -76,13 +130,15 @@ class CroMoonContestSelector:
             missed_by = abs(tokens - self._target_amount)
             # print("{} - {}".format(f'{tokens:,.2f}', f'{missed_by:,.2f}'))
             if self._closest_guess is None or missed_by < self._closest_guess:
-                self._closest_guess = missed_by
-                self._winners = [
-                    {'wallet': wallet, 'txn': transaction.get('hash'), 'tokens': tokens, 'record': transaction}]
-                continue
+                if self.__is_buy(transaction.get('hash')):
+                    self._closest_guess = missed_by
+                    self._winners = [
+                        {'wallet': wallet, 'txn': transaction.get('hash'), 'tokens': tokens, 'record': transaction}]
+                    continue
             if missed_by == self._closest_guess:
-                self._winners.append(
-                    {'wallet': wallet, 'txn': transaction.get('hash'), 'tokens': tokens, 'record': transaction})
+                if self.__is_buy(transaction.get('hash')):
+                    self._winners.append(
+                        {'wallet': wallet, 'txn': transaction.get('hash'), 'tokens': tokens, 'record': transaction})
         return self._winners
 
     def _print_winners(self):
