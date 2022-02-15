@@ -476,11 +476,11 @@ def process_start_time_step(message):
     try:
         if message.text == u'cheat':
             with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
-                data['start_time'] = datetime.datetime.fromtimestamp(1644695310)
-                data['end_time'] = datetime.datetime.fromtimestamp(1644778439)
-                data['embargo_end_time'] = datetime.datetime.fromtimestamp(1644778439)
-                data['low_number'] = 50979881731
-                data['high_number'] = 50979881732
+                data['start_time'] = datetime.datetime.fromtimestamp(1644705900)
+                data['end_time'] = datetime.datetime.fromtimestamp(1644792300)
+                data['embargo_end_time'] = datetime.datetime.fromtimestamp(1644792300)
+                data['low_number'] = 35042290235.099999999
+                data['high_number'] = 35042290235.0100000001
             bot.reply_to(message, "Say '<b>pick</b>' to cheat", parse_mode=telegram.ParseMode.HTML)
             bot.set_state(message.from_user.id, ContestStates.confirmation.name, message.chat.id)
             return

@@ -8,6 +8,8 @@ import requests
 cromoon_contract_address = "0x7D30c36f845d1dEe79f852abF3A8A402fAdF3b53".lower()
 
 SWAP_ETH_FOR_EXACT = "0xfb3bdb41"  # Only winner
+SWAP_EXACT_ETH_FOR_TOKEN = "0x7ff36ab5"
+BUY_METHODS = [SWAP_EXACT_ETH_FOR_TOKEN, SWAP_ETH_FOR_EXACT]
 DEPOSIT = "0x8dbdbe6d"
 ADD_LIQUIDITY = "0xf305d719"  # Don't exclude as seller
 REMOVE_LIQUIDITY = "0xded9382a"  # Don't consider winner
@@ -45,7 +47,6 @@ class CroMoonContestSelector:
             self._target_amount = target
         else:
             self._target_amount = round(uniform(min_num, max_num), 2)
-        self._closest_guess = None
         self._sellers = []
         self._winners = []
         self._qualified_transaction = 0
@@ -53,7 +54,10 @@ class CroMoonContestSelector:
         # Uncomment this to test with only Crodex pair
         # self._dex_pairs = ['0xb2ba36ee6ba6113a914f3e8812a0df094dec5994']
         self.__get_qualified_transactions()
-        self.__find_winners()
+        while len(self._winners) == 0:
+            self._closest_guess = None
+            self.__find_winners()
+            # self.__remove_sellers()
 
     def __get_qualified_transactions(self):
         for dex in self._dex_pairs:
@@ -72,7 +76,11 @@ class CroMoonContestSelector:
                     # if self.__is_sell(hash):
                     #     self._sellers.append(res.get('from'))
                     self._sellers.append(res.get('from'))
+                    # if res.get('to').lower() == "0xc162d888a2e215F301239adc72344E185F0546F1".lower():
+                    #     print(res)
                 else:
+                    # if res.get('to').lower() == "0xc162d888a2e215F301239adc72344E185F0546F1".lower():
+                    #     print(res)
                     self._transactions.append(res)
 
     def __is_sell(self, hash):
@@ -114,7 +122,7 @@ class CroMoonContestSelector:
                     got_result = True
             input_data = result.get('input')
             method = input_data[0:10]
-            if method == SWAP_ETH_FOR_EXACT:
+            if method in BUY_METHODS:
                 return True
             else:
                 return False
@@ -132,6 +140,9 @@ class CroMoonContestSelector:
             tokens = float(value[:-decimal] + '.' + value[len(value) - decimal:])
             missed_by = abs(tokens - self._target_amount)
             # print("{} - {}".format(f'{tokens:,.2f}', f'{missed_by:,.2f}'))
+            # if transaction.get('to').lower() == "0xc162d888a2e215F301239adc72344E185F0546F1".lower():
+            #     print(transaction)
+
             if self._closest_guess is None or missed_by < self._closest_guess:
                 if self.__is_buy(transaction.get('hash')):
                     self._closest_guess = missed_by
@@ -143,6 +154,29 @@ class CroMoonContestSelector:
                     self._winners.append(
                         {'wallet': wallet, 'txn': transaction.get('hash'), 'tokens': tokens, 'record': transaction})
         return self._winners
+
+    def __remove_sellers(self):
+        new_winners = []
+        for winner in self._winners:
+            is_seller = False
+            # get transactions for wallet
+            sleep(1)
+            raw_result = requests.get(
+                'https://api.cronoscan.com/api?module=account&action=tokentx&address={}&startblock={}&endblock={}&sort=asc&apikey={}'.format(
+                    winner['wallet'], self._start_block, self._sale_embargo_block, randint(10000, 999999999))).json()
+            transactions = raw_result.get('result')
+            for txn in transactions:
+                print(txn)
+                if self.__is_sell(txn['hash']):
+                    is_seller = True
+                    break
+            if is_seller:
+                self._sellers.append(winner['wallet'])
+                print(self._sellers)
+            else:
+                new_winners.append(winner)
+                print(new_winners)
+        self._winners = new_winners
 
     def _print_winners(self):
         for winner in self._winners:
