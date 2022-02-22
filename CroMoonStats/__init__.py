@@ -6,15 +6,22 @@ import requests
 
 def _avg_price_values(price_dict: dict):
     price_sum = 0
+    count = 0
     for price in price_dict.values():
-        price_sum += price
-    return price_sum / len(price_dict)
+        if type(price) == float:
+            price_sum += price
+            count += 1
+    try:
+        return price_sum / count
+    except Exception as e:
+        return 'N/A'
 
 
 def _add_volume(volume_dict: dict):
     volume_sum = 0
     for vol in volume_dict.values():
-        volume_sum += float(vol)
+        if type(vol) == float:
+            volume_sum += float(vol)
     return volume_sum
 
 
@@ -76,10 +83,11 @@ class CroMoonStats:
             headers = {
                 "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36"}
             for pair in self._dex_pairs:
-                self._dextools_result[pair] = requests.get(
+                res = requests.get(
                     'https://www.dextools.io/chain-cronos/api/pair/summary?address={}&foo={}'.format(
                         pair, randint(1000, 9999999999)),
                     headers=headers).json()
+                self._dextools_result[pair] = res
                 self._all_prices[pair] = self._dextools_result[pair].get('price', 0)
                 self._all_price24h[pair] = self._dextools_result[pair].get('price24h', '0')
                 self._all_volume[pair] = self._dextools_result[pair].get("volume24", 0)
