@@ -42,7 +42,7 @@ class CroMoonStats:
         self._all_volume = {}
         self._price = 0
         self._price24h = 0
-        self.dexscreener_result = None
+        self._dexscreener_result = {}
         self.dexscreener_update_time = datetime.fromtimestamp(0)
         self.dexscreener_interval = timedelta(minutes=5)
         self.last_cronos_explorer_token_update = datetime.fromtimestamp(0)
@@ -60,7 +60,7 @@ class CroMoonStats:
         return r
 
     def get_current_price_string(self):
-        self.get_dextools()
+        self.get_dexscreener()
         return self._price
 
     def get_market_cap(self):
@@ -78,6 +78,7 @@ class CroMoonStats:
             self.last_cronoscan_update_time = now
 
     def get_dextools(self):
+        ## Not in use
         now = datetime.now()
         if now > self.last_dextools_update_time + self.dextools_interval:
             headers = {
@@ -97,26 +98,45 @@ class CroMoonStats:
             self._volume24 = _add_volume(self._all_volume)
             self.last_dextools_update_time = now
 
-    # def get_crodex(self):
-    #     now = datetime.now()
-    #     if now > self.last_crodex_update + self.crodex_interval:
-    #         self.crodex_result = requests.get(
-    #             'https://chartapi.crodex.app/token/0x7D30c36f845d1dEe79f852abF3A8A402fAdF3b53/info?foo={}'.format(randint(10000,999999999))).json()
-    #         self.cromoon_price = self.crodex_result.get('priceInUSDT', "ERROR")
-    #         self.last_crodex_update = now
-
     def get_token_holder_count(self):
         self.get_cronos_explorer_holder()
         return self.cronos_explorer_result.get('token_holder_count', '')
 
     def get_dexscreener(self):
-        ## NOT IN USE
         now = datetime.now()
+        now_ts = int(now.timestamp() * 1000)
+        twenty_four_ago = now - timedelta(days=1)
+        then_ts = int(twenty_four_ago.timestamp() * 1000)
         if now > self.dexscreener_update_time + self.dexscreener_interval:
-            self.dexscreener_result = requests.get(
-                'https://io9.dexscreener.io/u/trading-history/recent/cronos/0xb2bA36ee6ba6113a914f3E8812A0dF094DEC5994').json()
-            self._price = self.dexscreener_result.get('tradingHistory', [])[0].get('priceUsd', '0')
-            self.dexscreener_update_time = now
+            for pair in self._dex_pairs:
+                url = 'https://io8.dexscreener.io/u/chart/bars/cronos/{}?from={}&to={}&res=1&cb=300'.format(pair,
+                                                                                                            then_ts,
+                                                                                                            now_ts)
+                res = requests.get(url).json()
+                self.dexscreener_result = res
+                self._dexscreener_result[pair] = res
+                self.dexscreener_calculate_stats(pair, res.get('bars', []))
+                self.dexscreener_update_time = now
+
+        self._price = _avg_price_values(self._all_prices)
+        self._price24h = _avg_price_values(self._all_price24h)
+        self._volume24 = _add_volume(self._all_volume)
+
+    def dexscreener_calculate_stats(self, pair, bars):
+        now = datetime.now()
+        now_ts = int(now.timestamp() * 1000)
+        twenty_four_ago = now - timedelta(days=1)
+        then_ts = int(twenty_four_ago.timestamp() * 1000)
+        volume_24h = 0.0
+        bars = [bar for bar in bars if now_ts >= bar['timestamp'] >= then_ts]
+        bars = (sorted(bars, key=lambda i: i['timestamp'], reverse=True))
+        self._all_prices[pair] = float(bars[0].get('closeUsd', 0.0))
+        self._all_price24h[pair] = float(bars[-1].get('closeUsd', 0.0))
+        for bar in bars:
+            ts = bar.get('timestamp')
+            if now_ts >= ts >= then_ts:
+                volume_24h += float(bar.get('volumeUsd', 0.0))
+        self._all_volume[pair] = volume_24h
 
     def get_cronos_explorer_holder(self):
         now = datetime.now()
@@ -127,12 +147,12 @@ class CroMoonStats:
 
     @property
     def price(self):
-        self.get_dextools()
+        self.get_dexscreener()
         return f'{self._price:.12f}'
 
     @property
     def price24(self):
-        self.get_dextools()
+        self.get_dexscreener()
         return f'{self._price24h:.12f}'
 
     @property
@@ -153,12 +173,12 @@ class CroMoonStats:
 
     @property
     def volume_24(self):
-        self.get_dextools()
+        self.get_dexscreener()
         return f'{self._volume24:,.2f}'
 
     @property
     def change_24(self):
-        self.get_dextools()
+        self.get_dexscreener()
         price = self._price
         price24 = self._price24h
         if price == 0 or price24 == 0:
