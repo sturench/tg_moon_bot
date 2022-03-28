@@ -56,7 +56,10 @@ class CroMoonStats:
     def get_dead_wallet(self):
         self.get_cronoscan()
         count = self.cronoscan_result['result']
-        r = int(count) / 1000000000
+        try:
+            r = int(count) / 1000000000
+        except Exception as e:
+            r = 0.0
         return r
 
     def get_current_price_string(self):
@@ -112,11 +115,15 @@ class CroMoonStats:
                 url = 'https://io8.dexscreener.io/u/chart/bars/cronos/{}?from={}&to={}&res=1&cb=300'.format(pair,
                                                                                                             then_ts,
                                                                                                             now_ts)
-                res = requests.get(url).json()
-                self.dexscreener_result = res
-                self._dexscreener_result[pair] = res
-                self.dexscreener_calculate_stats(pair, res.get('bars', []))
-                self.dexscreener_update_time = now
+                try:
+                    res = requests.get(url).json()
+                    self.dexscreener_result = res
+                    self._dexscreener_result[pair] = res
+                    self.dexscreener_calculate_stats(pair, res.get('bars', []))
+                    self.dexscreener_update_time = now
+                except Exception as e:
+                    # That didn't go well
+                    pass
 
         self._price = _avg_price_values(self._all_prices)
         self._price24h = _avg_price_values(self._all_price24h)
