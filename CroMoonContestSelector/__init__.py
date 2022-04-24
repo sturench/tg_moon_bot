@@ -20,7 +20,7 @@ TRANSFER = "0x38ed1739"  # Don't consider winner
 def get_block_number_from_timestamp(timestamp: int) -> int:
     raw_result = requests.get(
         "https://api.cronoscan.com/api?module=block&action=getblocknobytime&timestamp={}&closest=after&apikey={}".format(
-            timestamp, randint(10000, 999999999))).json()
+            timestamp, 'M6WJHQ5E24Y5DX51PGYKUJ539MQ5Q9QNX4')).json()
     block = raw_result.get('result', 0)
     return block
 
@@ -63,7 +63,7 @@ class CroMoonContestSelector:
         for dex in self._dex_pairs:
             raw_result = requests.get(
                 'https://api.cronoscan.com/api?module=account&action=tokentx&address={}&startblock={}&endblock={}&sort=asc&apikey={}'.format(
-                    dex, self._start_block, self._sale_embargo_block, randint(10000, 999999999))).json()
+                    dex, self._start_block, self._sale_embargo_block, 'M6WJHQ5E24Y5DX51PGYKUJ539MQ5Q9QNX4')).json()
             self.__add_transactions(raw_result)
 
     def __add_transactions(self, raw: {}):
@@ -90,7 +90,7 @@ class CroMoonContestSelector:
             while not got_result:
                 raw_result = requests.get(
                     "https://api.cronoscan.com/api?module=proxy&action=eth_getTransactionByHash&txhash={}&apikey={}".format(
-                        hash, randint(10000, 99999999))).json()
+                        hash, 'M6WJHQ5E24Y5DX51PGYKUJ539MQ5Q9QNX4')).json()
                 result = raw_result.get('result', 'NONE')
                 if type(result) == str:
                     print('sleeping')
@@ -113,7 +113,7 @@ class CroMoonContestSelector:
             while not got_result:
                 raw_result = requests.get(
                     "https://api.cronoscan.com/api?module=proxy&action=eth_getTransactionByHash&txhash={}&apikey={}".format(
-                        hash, randint(10000, 99999999))).json()
+                        hash, 'M6WJHQ5E24Y5DX51PGYKUJ539MQ5Q9QNX4')).json()
                 result = raw_result.get('result', 'NONE')
                 if type(result) == str:
                     print('sleeping')
@@ -163,7 +163,7 @@ class CroMoonContestSelector:
             sleep(1)
             raw_result = requests.get(
                 'https://api.cronoscan.com/api?module=account&action=tokentx&address={}&startblock={}&endblock={}&sort=asc&apikey={}'.format(
-                    winner['wallet'], self._start_block, self._sale_embargo_block, randint(10000, 999999999))).json()
+                    winner['wallet'], self._start_block, self._sale_embargo_block, 'M6WJHQ5E24Y5DX51PGYKUJ539MQ5Q9QNX4')).json()
             transactions = raw_result.get('result')
             for txn in transactions:
                 print(txn)

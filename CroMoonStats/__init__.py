@@ -77,7 +77,7 @@ class CroMoonStats:
         if now > self.last_cronoscan_update_time + self.cronoscan_interval:
             self.cronoscan_result = requests.get(
                 'https://api.cronoscan.com/api?module=account&action=tokenbalance&contractaddress=0x7d30c36f845d1dee79f852abf3a8a402fadf3b53&address=0x000000000000000000000000000000000000dEaD&tag=latest&apikey={}'.format(
-                    randint(10000, 999999999))).json()
+                    'M6WJHQ5E24Y5DX51PGYKUJ539MQ5Q9QNX4')).json()
             self.last_cronoscan_update_time = now
 
     def get_dextools(self):

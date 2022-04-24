@@ -41,7 +41,7 @@ class ReflectionTracker:
         if force or now > self._last_transaction_check + self._check_interval:
             raw_result = requests.get(
                 'https://api.cronoscan.com/api?module=account&action=tokentx&address={}&startblock={}&sort=asc&apikey={}'.format(
-                    self._wallet_address, self._last_block, randint(10000, 999999999))).json()
+                    self._wallet_address, self._last_block, 'M6WJHQ5E24Y5DX51PGYKUJ539MQ5Q9QNX4')).json()
             self.__process_transactions(raw_result)
             self._last_transaction_check = now
 
@@ -86,7 +86,7 @@ class ReflectionTracker:
         if now > self._last_balance_check + self._check_interval:
             result = requests.get(
                 'https://api.cronoscan.com/api?module=account&action=tokenbalance&contractaddress=0x7d30c36f845d1dee79f852abf3a8a402fadf3b53&address={}&tag=latest&apikey={}'.format(
-                    self._wallet_address, randint(10000, 999999999))).json()
+                    self._wallet_address, 'M6WJHQ5E24Y5DX51PGYKUJ539MQ5Q9QNX4')).json()
             value = result.get('result')
             decimal = 9
             tokens = float(value[:-decimal] + '.' + value[len(value) - decimal:])
